@@ -1,49 +1,56 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import PropTypes from "prop-types";
+import { FaStar } from "react-icons/fa";
+import { useLocalStorageState } from "../hooks/useLocalStorage";
+import { ModalContext } from "./Modal";
+// const containerStyle = {
+//   display: "flex",
+//   flexDirection: "column",
+//   justifyContent: "center",
+//   alignItems: "center",
+//   gap: "16px",
+// };
 
-const containerStyle = {
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "center",
-  alignItems: "center",
-  gap: "16px",
-};
-
-const starContainerStyle = {
-  display: "flex",
-  gap: "0.25rem",
-};
+// const starContainerStyle = {
+//   display: "flex",
+//   gap: "0.25rem",
+// };
 
 StarRating.propTypes = {
   maxRating: PropTypes.number,
   defaultRating: PropTypes.number,
   color: PropTypes.string,
-  size: PropTypes.number,
   messages: PropTypes.array,
   className: PropTypes.string,
   onSetRating: PropTypes.func,
 };
 
 export default function StarRating({
+  series,
+  setUserRating,
+
   maxRating = 10,
   color = "#fcc419",
-  size = 14,
-  className = "",
   messages = [],
   defaultRating = 0,
-  onSetRating,
 }) {
+  const { close } = useContext(ModalContext);
   const [rating, setRating] = useState(defaultRating);
   const [tempRating, setTempRating] = useState(0);
-
+  const [ratedMovies, setRatedMovies] = useLocalStorageState([], "ratedMovies");
   function handleRating(rating) {
     setRating(rating);
-    onSetRating(rating);
   }
-
+  console.log(ratedMovies);
+  function handleRateMovie() {
+    setRatedMovies([...ratedMovies, { title: series, userRating: rating }]);
+    setUserRating(rating);
+    close();
+  }
   return (
-    <div style={containerStyle} className={className}>
-      <div style={starContainerStyle}>
+    <div className="flex flex-col items-center justify-center gap-4">
+      <h3>{series}</h3>
+      <div className="flex gap-1">
         {Array.from({ length: maxRating }, (_, i) => (
           <Star
             key={i}
@@ -52,38 +59,31 @@ export default function StarRating({
             onHoverIn={() => setTempRating(i + 1)}
             onHoverOut={() => setTempRating(0)}
             color={color}
-            size={size}
           />
         ))}
       </div>
       <div>
-        {tempRating !== 0 && (
-          <button
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "0.7rem",
-              padding: "o.5rem 0.7rem",
-              width: "6rem",
-              border: "1px solid #fcc419",
-            }}
-          >
-            <span style={{ color: "white" }}>Rate</span>
-
-            <span style={{ color: "#fcc419" }}>
-              {messages.length === maxRating
-                ? messages[tempRating ? tempRating - 1 : rating - 1]
-                : tempRating || rating || ""}
-            </span>
-          </button>
-        )}
+        <button
+          disabled={tempRating === 0}
+          onClick={handleRateMovie}
+          className="flex w-48 cursor-pointer items-center gap-3 rounded-md border border-primary px-3 py-2 tracking-wider transition-all duration-300 hover:bg-lightblack"
+        >
+          <span className="flex w-3/4 items-center justify-center gap-2">
+            <span className=" text-gray-100">Rate</span>
+            <FaStar className="text-primary" />
+          </span>
+          <span className="w-1/4 text-primary">
+            {messages.length === maxRating
+              ? messages[tempRating ? tempRating - 1 : rating - 1]
+              : tempRating || rating || ""}
+          </span>
+        </button>
       </div>
     </div>
   );
 }
 
-function Star({ onRate, full, onHoverIn, onHoverOut, color, size }) {
+function Star({ onRate, full, onHoverIn, onHoverOut, color }) {
   /*
   const starStyle = {
     // width: `${size}px`,
@@ -96,7 +96,7 @@ function Star({ onRate, full, onHoverIn, onHoverOut, color, size }) {
   return (
     <span
       role="button"
-      className={`w-[${size}px] h-[${size}px] xs:w-[${size * 2}px] xs:h-[${size * 2}px] `}
+      className="h-4 w-4 xs:h-8 xs:w-8 "
       onClick={onRate}
       onMouseEnter={onHoverIn}
       onMouseLeave={onHoverOut}
